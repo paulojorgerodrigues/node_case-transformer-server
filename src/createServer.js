@@ -22,41 +22,47 @@ function createServer() {
 
     if (textToconvert === '') {
       errors.errors.push(
-        'Text to convert is required. Correct request is: "/<TEXT_TO_CONVERT>?toCase=<CASE_NAME>".',
+        {message: 'Text to convert is required. Correct request is: "/<TEXT_TO_CONVERT>?toCase=<CASE_NAME>".'}
       );
     }
 
-    if (toCase === '') {
+    if (toCase === '' || toCase === undefined || toCase === null) {
       errors.errors.push(
-        '"toCase" query param is required. Correct request is: "/<TEXT_TO_CONVERT>?toCase=<CASE_NAME>".',
+        {message: '"toCase" query param is required. Correct request is: "/<TEXT_TO_CONVERT>?toCase=<CASE_NAME>".'}
       );
     }
 
-    if (
-      !cases.find((v, i, a) => {
+    if ( toCase && !cases.find((v, i, a) => {
         return v === toCase;
       })
     ) {
       errors.errors.push(
-        'This case is not supported. Available cases: SNAKE, KEBAB, CAMEL, PASCAL, UPPER.',
+        {message: 'This case is not supported. Available cases: SNAKE, KEBAB, CAMEL, PASCAL, UPPER.'}
       );
     }
 
     if (errors.errors.length > 0) {
       res.statusCode = 400;
       res.statusMessage = 'Bad request';
-      res.write(errors);
+      res.write(JSON.stringify(errors));
       res.end();
 
       return;
     }
 
-    const ret = convertToCase(textToconvert, toCase);
+    const conversion = convertToCase(textToconvert, toCase);
+
+    const ret = {
+      originalCase: conversion.originalCase,
+      targetCase: toCase,
+      originalText: textToconvert,
+      convertedText: conversion.convertedText,
+    };
 
     res.statusCode = 200;
     res.statusMessage = 'OK';
 
-    res.write(ret);
+    res.write(JSON.stringify(ret));
 
     res.end();
   });
